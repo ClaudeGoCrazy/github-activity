@@ -1,41 +1,34 @@
-name: GitHub Activity
+name: GitHub Activity Update
 
 on:
-  workflow_dispatch:  # Allows manual trigger
   schedule:
-    - cron: "0 12 * * *"  # Runs every day at noon UTC
+    - cron: "0 0 * * *"  # Runs every midnight
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
-  generate_commits:
+  update-activity:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false  # Prevents permission errors
+          persist-credentials: false  # Important! Prevents using GITHUB_TOKEN
 
-      - name: Set Up Git User
+      - name: Configure Git
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "YourGitHubUsername"
+          git config --global user.email "cfelix2@lsu.edu"
 
-      - name: Fetch Latest Commits (Prevents Conflicts)
+      - name: Make changes
         run: |
-          git fetch --unshallow
-          git pull origin main || true  # Ignores errors if branch does not exist
+          echo "$(date)" >> activity_log.txt
+          git add activity_log.txt
+          git commit -m "GitHub Activity Update: $(date)"
 
-      - name: Add Past Contributions
-        run: |
-          for i in {1..700}; do
-            DATE=$(date -d "$i days ago" +%Y-%m-%dT%H:%M:%S)
-            echo "GitHub Activity Update: $DATE" > activity_log.txt
-            git add activity_log.txt
-            GIT_AUTHOR_DATE="$DATE" GIT_COMMITTER_DATE="$DATE" git commit -m "GitHub Activity Update: $DATE"
-          done
-
-      - name: Push Commits to GitHub Securely
+      - name: Push changes using PAT
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git push origin HEAD:main
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/YourGitHubUsername/YourRepo.git
+          git push origin main
