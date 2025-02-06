@@ -1,34 +1,41 @@
-name: GitHub Activity Update
+name: GitHub Activity
 
 on:
+  workflow_dispatch:  # Allows manual trigger
   schedule:
-    - cron: "0 0 * * *"  # Runs every midnight
-  workflow_dispatch: # Allows manual triggering
+    - cron: "0 12 * * *"  # Runs every day at noon UTC
 
 jobs:
-  update-activity:
+  generate_commits:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false  # Important! Prevents using GITHUB_TOKEN
+          persist-credentials: false  # Prevents permission errors
 
-      - name: Configure Git
+      - name: Set Up Git User
         run: |
           git config --global user.name "ClaudeGoCrazy"
           git config --global user.email "cfelix2@lsu.edu"
 
-      - name: Make changes
+      - name: Fetch Latest Commits (Prevents Conflicts)
         run: |
-          echo "$(date)" >> activity_log.txt
-          git add activity_log.txt
-          git commit -m "GitHub Activity Update: $(date)"
+          git fetch --unshallow
+          git pull origin main || true  # Ignores errors if branch does not exist
 
-      - name: Push changes using PAT
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Add Past Contributions
         run: |
-          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/ClaudeGoCrazy/github-activity.git
-          git push origin main
+          for i in {1..700}; do
+            DATE=$(date -d "$i days ago" +%Y-%m-%dT%H:%M:%S)
+            echo "GitHub Activity Update: $DATE" > activity_log.txt
+            git add activity_log.txt
+            GIT_AUTHOR_DATE="$DATE" GIT_COMMITTER_DATE="$DATE" git commit -m "GitHub Activity Update: $DATE"
+          done
+
+      - name: Push Commits to GitHub Securely
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git push origin HEAD:main
