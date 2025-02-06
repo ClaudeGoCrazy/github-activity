@@ -17,7 +17,7 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "YourGitHubUsername"
+          git config --global user.name "ClaudeGoCrazy"
           git config --global user.email "cfelix2@lsu.edu"
 
       - name: Make changes
