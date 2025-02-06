@@ -11,12 +11,21 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # Prevents permission errors
 
-      - name: Add Past Contributions
+      - name: Set Up Git User
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
+      - name: Fetch Latest Commits (Prevents Conflicts)
+        run: |
+          git fetch --unshallow
+          git pull origin main || true  # Ignores errors if branch does not exist
+
+      - name: Add Past Contributions
+        run: |
           # Create past commits for the last 700 days
           for i in {1..700}; do
             DATE=$(date -d "$i days ago" +%Y-%m-%dT%H:%M:%S)
@@ -25,4 +34,6 @@ jobs:
             GIT_AUTHOR_DATE="$DATE" GIT_COMMITTER_DATE="$DATE" git commit -m "GitHub Activity Update: $DATE"
           done
 
-          git push
+      - name: Push Commits to GitHub
+        run: |
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
