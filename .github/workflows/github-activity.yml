@@ -1,9 +1,9 @@
 name: GitHub Activity
 
 on:
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
   schedule:
-    - cron: "0 12 * * *"  # Runs every day at noon UTC
+    - cron: "0 */3 * * *"  # Every 3 hours
 
 jobs:
   generate_commits:
@@ -12,25 +12,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false  # Prevents permission errors
+          persist-credentials: false
 
       - name: Set Up Git User
         run: |
           git config --global user.name "ClaudeGoCrazy"
-          git config --global user.email "cfelix2@lsu.edu"
+          git config --global user.email "cfelix@lsu.edu"
 
       - name: Fetch Latest Commits (Prevents Conflicts)
         run: |
           git fetch --unshallow
-          git pull origin main || true  # Ignores errors if branch does not exist
+          git pull origin main || true
 
-      - name: Add Past Contributions
+      - name: Add Contributions
         run: |
-          for i in {1..1372}; do
-            DATE=$(date -d "$i days ago" +%Y-%m-%dT%H:%M:%S)
-            echo "GitHub Activity Update: $DATE" > activity_log.txt
+          for i in $(seq 1 $(shuf -i 3-7 -n 1)); do
+            echo "GitHub Activity Update: $(date -u +%Y-%m-%dT%H:%M:%S)-run$i" > activity_log.txt
             git add activity_log.txt
-            GIT_AUTHOR_DATE="$DATE" GIT_COMMITTER_DATE="$DATE" git commit -m "GitHub Activity Update: $DATE"
+            git commit -m "GitHub Activity Update: $(date -u +%Y-%m-%dT%H:%M:%S)-$i"
+            sleep 2
           done
 
       - name: Push Commits to GitHub Securely
