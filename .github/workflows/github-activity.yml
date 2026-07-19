@@ -17,7 +17,7 @@ jobs:
       - name: Set Up Git User
         run: |
           git config --global user.name "ClaudeGoCrazy"
-          git config --global user.email "cfelix@lsu.edu"
+          git config --global user.email "168639842+ClaudeGoCrazy@users.noreply.github.com"
 
       - name: Fetch Latest Commits (Prevents Conflicts)
         run: |
